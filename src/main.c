@@ -13,6 +13,7 @@
 #include "pico/stdlib.h"
 
 #include "ble_midi.h"
+#include "usb_midi.h"
 #include "button.h"
 #include "display.h"
 #include "looper.h"
@@ -66,12 +67,14 @@ static void looper_update_bpm(uint32_t bpm) {
 
 // Check if the note output destination is ready.
 static bool looper_perform_ready(void) {
-    return ble_midi_is_connected();
+    return ble_midi_is_connected()
+           || usb_midi_is_connected();
 }
 
 // Send a note event to the output destination.
 static void looper_perform_note(uint8_t channel, uint8_t note, uint8_t velocity) {
     ble_midi_send_note(channel, note, velocity);
+    usb_midi_send_note(channel, note, velocity);
 }
 
 // Sends a MIDI click at specific steps to indicate rhythm.
@@ -272,6 +275,8 @@ int main(void) {
     looper_update_bpm(LOOPER_DEFAULT_BPM);
 
     ble_midi_init(looper_process_state, looper_status.step_duration_ms);
+    usb_midi_init();
+
     printf("[MAIN] BLE MIDI Looper start\n");
     while (true) {
         button_event_t event = button_poll_event();
@@ -283,6 +288,8 @@ int main(void) {
             looper_handle_button_event(event);
         }
         looper_update_status_led();
+
+        usb_midi_task();
     }
     return 0;
 }
