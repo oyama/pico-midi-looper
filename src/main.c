@@ -1,5 +1,5 @@
 /* main.c
- * BLE MIDI looper for Raspberry Pi Pico W.
+ * USB/BLE MIDI looper for Raspberry Pi Pico W.
  * A minimal 2-bars loop recorder using a single button to record and switch tracks.
  *
  * Copyright 2025, Hiroyuki OYAMA
@@ -67,8 +67,7 @@ static void looper_update_bpm(uint32_t bpm) {
 
 // Check if the note output destination is ready.
 static bool looper_perform_ready(void) {
-    return ble_midi_is_connected()
-           || usb_midi_is_connected();
+    return ble_midi_is_connected() || usb_midi_is_connected();
 }
 
 // Send a note event to the output destination.
@@ -269,13 +268,21 @@ static void looper_handle_button_event(button_event_t event) {
     }
 }
 
+static void system_tick(void) {
+    looper_update_status_led();
+    usb_midi_task();
+}
+
+static void midi_output_init(void) {
+    ble_midi_init(looper_process_state, looper_status.step_duration_ms);
+    usb_midi_init();
+}
+
 int main(void) {
     stdio_init_all();
     cyw43_arch_init();
+    midi_output_init();
     looper_update_bpm(LOOPER_DEFAULT_BPM);
-
-    ble_midi_init(looper_process_state, looper_status.step_duration_ms);
-    usb_midi_init();
 
     printf("[MAIN] BLE MIDI Looper start\n");
     while (true) {
@@ -287,9 +294,7 @@ int main(void) {
         } else {
             looper_handle_button_event(event);
         }
-        looper_update_status_led();
-
-        usb_midi_task();
+        system_tick();
     }
     return 0;
 }
