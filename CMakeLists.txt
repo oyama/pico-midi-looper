@@ -11,8 +11,6 @@ add_executable(${CMAKE_PROJECT_NAME}
   src/button.c
   src/tap_tempo.c
   src/display.c
-  src/ble_midi.c
-  src/usb_midi.c
 )
 pico_btstack_make_gatt_header(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/midi_service.gatt)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
@@ -23,6 +21,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 add_library(ble_midi INTERFACE)
+target_sources(ble_midi INTERFACE src/ble_midi.c)
 target_link_libraries(ble_midi INTERFACE
   pico_btstack_ble
   pico_btstack_cyw43
@@ -30,7 +29,8 @@ target_link_libraries(ble_midi INTERFACE
 )
 
 add_library(usb_midi INTERFACE)
-target_link_libraries(ble_midi INTERFACE
+target_sources(usb_midi INTERFACE src/usb_midi.c)
+target_link_libraries(usb_midi INTERFACE
   tinyusb_device
   tinyusb_board
 )
