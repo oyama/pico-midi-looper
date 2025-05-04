@@ -50,7 +50,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/pico-midi-looper/build
-      run: PICO_SDK_PATH=../../pico-sdk cmake .. -DPICO_BOARD=pico_w -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: PICO_SDK_PATH=../../pico-sdk cmake .. -DPICO_BOARD=pico -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
     - name: Build
       working-directory: ${{github.workspace}}/pico-midi-looper/build

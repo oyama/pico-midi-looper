@@ -11,7 +11,6 @@
  */
 #include <math.h>
 #include <string.h>
-#include "pico/stdlib.h"
 
 #include "drivers/usb_midi.h"
 #include "drivers/button.h"
