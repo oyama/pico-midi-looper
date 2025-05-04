@@ -16,6 +16,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
   pico_stdlib
   drivers
 )
+if (PICO_CYW43_SUPPORTED)
+  target_link_libraries(${CMAKE_PROJECT_NAME} pico_cyw43_arch_none)
+endif()
+
 pico_enable_stdio_usb(${CMAKE_PROJECT_NAME} 1)
 pico_add_extra_outputs(${CMAKE_PROJECT_NAME})
 

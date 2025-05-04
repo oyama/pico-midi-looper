@@ -18,6 +18,10 @@
 #include "looper.h"
 #include "tap_tempo.h"
 
+#ifdef CYW43_WL_GPIO_LED_PIN
+#include "pico/cyw43_arch.h"
+#endif
+
 enum {
     MIDI_CHANNEL_1 = 0,
     MIDI_CHANNEL_10 = 9,
@@ -45,6 +49,15 @@ static const size_t NUM_TRACKS = sizeof(tracks) / sizeof(track_t);
 
 static bool status_led_on = false;
 
+void looper_status_led_init(void) {
+#if defined(PICO_DEFAULT_LED_PIN)
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+#elif defined(CYW43_WL_GPIO_LED_PIN)
+    cyw43_arch_init();
+#endif
+}
+
 /*
  * Controls the built-in LED on the Pico W.
  * Used for indicating the active track or recording.
@@ -56,7 +69,11 @@ static void looper_set_status_led(bool on) { status_led_on = on; }
  * Otherwise mirrors the `status_led_on` flag during playback/recording.
  */
 static void looper_update_status_led(void) {
+#if defined(PICO_DEFAULT_LED_PIN)
     gpio_put(PICO_DEFAULT_LED_PIN, status_led_on);
+#elif defined(CYW43_WL_GPIO_LED_PIN)
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, status_led_on);
+#endif
 }
 
 // Check if the note output destination is ready.
