@@ -2,7 +2,7 @@
  * display.c
  *
  * UART-based text UI for the Pico MIDI Looper.
- * This module is responsible for rendering the BLE connection status,
+ * This module is responsible for rendering the USB connection status,
  * current looper state, and per-track step patterns over a serial console.
  *
  * Copyright 2025, Hiroyuki OYAMA
@@ -12,7 +12,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "drivers/ble_midi.h"
 #include "looper.h"
 
 #define ANSI_RESET "\x1b[0m"
@@ -43,12 +42,12 @@ static void print_track(const char *label, const bool *steps, uint8_t current_st
 }
 
 // Displays the looper's playback state, connection status, and track patterns.
-void display_update_looper_status(bool ble_connected, const looper_status_t *looper,
+void display_update_looper_status(bool output_connected, const looper_status_t *looper,
                                   const track_t *tracks, size_t num_tracks) {
     printf(ANSI_BOLD "#Pico_MIDI_Looper" ANSI_RESET "\n");
 
     const char *state_label = ANSI_BRIGHT_BLUE "WAITING" ANSI_RESET;
-    if (ble_connected) {
+    if (output_connected) {
         switch (looper->state) {
             case LOOPER_STATE_PLAYING:
             case LOOPER_STATE_TRACK_SWITCH:

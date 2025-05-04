@@ -1,7 +1,7 @@
 #pragma once
 
+#include "pico/stdlib.h"
 #include "drivers/button.h"
-#include "drivers/ble_midi.h"
 
 #define LOOPER_DEFAULT_BPM 120   // Beats per minute (global tempo)
 #define LOOPER_BARS 2            // Loop length in bars
@@ -60,6 +60,6 @@ void looper_process_state(uint64_t start_us);
 
 void looper_handle_button_event(button_event_t event);
 
-void looper_handle_tick(btstack_timer_source_t *ts);
+int64_t looper_handle_tick(alarm_id_t id, void *args);
 
 void looper_handle_input(void);

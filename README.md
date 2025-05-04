@@ -1,10 +1,13 @@
 # Pico MIDI Looper
 
 [![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
+![Price](https://img.shields.io/badge/Hardware-$4-green)
+
+The BLE-MIDI version is archived here: https://github.com/oyama/pico-midi-looper-ble
 
 ## Overview
 
-The Pico MIDI Looper is a minimalist 2-bar drum looping device that leverages the Raspberry Pi Pico W's capabilities to provide wireless MIDI functionality via Bluetooth Low Energy (BLE-MIDI). Its primary purpose is to offer a compact, easy-to-build musical instrument that enables rhythm creation with minimal hardware requirements.
+The Pico MIDI Looper is a minimalist 2-bar drum looping device that leverages the Raspberry Pi Pico's capabilities to provide MIDI functionality via USB (USB-MIDI). Its primary purpose is to offer a compact, easy-to-build musical instrument that enables rhythm creation with minimal hardware requirements.
 
 The system is designed for:
 - Educational contexts and workshops
@@ -12,7 +15,7 @@ The system is designed for:
 - Prototyping musical ideas
 - Minimalist music creation
 
-The looper requires only the standard Raspberry Pi Pico W hardware with no additional components, utilizing just the onboard BOOTSEL button for all interactions.
+The looper requires only the standard Raspberry Pi Pico hardware with no additional components, utilizing just the onboard BOOTSEL button for all interactions.
 
 [![YouTube Demo](https://img.youtube.com/vi/_J5nquZ1nLc/0.jpg)](https://www.youtube.com/shorts/_J5nquZ1nLc)
 
@@ -20,7 +23,7 @@ The looper requires only the standard Raspberry Pi Pico W hardware with no addit
 
 | Feature                | Description                                |
 |------------------------|--------------------------------------------|
-| BLE-MIDI Compatibility | Wirelessly connects to DAWs and synth apps |
+| USB-MIDI Compatibility | Connects directly to DAWs and synth apps via USB |
 | 2-Bar Pattern Length   | 32 steps (4 beats × 4 subdivisions × 2 bars)|
 | 4-Track Structure      | Separate tracks for different drum sounds  |
 | Tap-Tempo              | Set BPM by tapping the button              |
@@ -39,15 +42,14 @@ You can either download a prebuilt `.uf2` from the [Releases](https://github.com
 
 To flash the firmware:
 
-1. Hold the `BOOTSEL` button while connecting your Raspberry Pi Pico W via USB.
+1. Hold the `BOOTSEL` button while connecting your Raspberry Pi Pico via USB.
 2. Copy the `pico-midi-looper.uf2` file onto the mounted USB drive.
 3. The device will reboot and start running the looper.
 
-### Connect via BLE-MIDI
+### Connect via USB
 
-1. Open a BLE-MIDI compatible app (e.g., GarageBand on iOS).
-2. Look for `Pico` and connect to it.
-3. Start recording and playing right away.
+1. Open a USB-MIDI compatible app (e.g., GarageBand on iOS).
+2. Start recording and playing right away.
 
 For detailed instructions on iOS, see
 [Getting Started with GarageBand](docs/getting-started-with-garageband.md)
@@ -75,19 +77,19 @@ The button interface is handled by a dedicated subsystem that detects press dura
 
 The looper provides four distinct tracks, each associated with a specific MIDI note number that corresponds to standard General MIDI drum sounds:
 
-| Track	  | Sound	        |MIDI Note |
+| Track   | Sound         |MIDI Note |
 |---------|---------------|----------|
-| Track 1	| Bass Drum     | 36       |
-| Track 2	| Snare Drum    | 38       |
-| Track 3	| Closed Hi-Hat | 42       |
-| Track 4	| Open Hi-Hat   | 46       |
+| Track 1 | Bass Drum     | 36       |
+| Track 2 | Snare Drum    | 38       |
+| Track 3 | Closed Hi-Hat | 42       |
+| Track 4 | Open Hi-Hat   | 46       |
 
 Additionally, the system uses two special sounds for feedback:
 
 - Hand Clap (MIDI Note 39) for track switching cues
 - Rim Shot (MIDI Note 37) for metronome clicks
 
-These MIDI notes are defined in the code and transmitted over BLE-MIDI to compatible receivers.
+These MIDI notes are defined in the code and transmitted over USB-MIDI to compatible receivers.
 
 ### Display
 
@@ -98,7 +100,7 @@ When connected to a serial terminal (at 115200 bps), the Pico MIDI Looper provid
 The display shows:
 
 - All four tracks labeled by their drum sound
-- A 32-step sixteenth-note loop (2 bars)  
+- A 32-step sixteenth-note loop (2 bars)
 - The current playback position
 
 This visual feedback makes it easier to understand the current pattern and position during playback and recording.
@@ -114,11 +116,11 @@ Once ready:
 git clone https://github.com/oyama/pico-midi-looper.git
 cd pico-midi-looper
 mkdir build && cd build
-PICO_SDK_PATH=/path/to/pico-sdk cmake .. -DPICO_BOARD=pico_w
+PICO_SDK_PATH=/path/to/pico-sdk cmake ..
 make
 ```
 
-This will produce the `pico-midi-looper.uf2` in your `build/` directory.
+This will produce `pico‑midi‑looper.uf2` in the `build` directory.
 
 ## Architecture
 
@@ -130,13 +132,13 @@ Located under `src/`, the core consists of fewer than three hundred lines of har
 
 ### Drivers layer
 
-Residing in `drivers/`, the drivers provide the project’s only connection to hardware. Each driver exposes a narrow C interface and fulfils a single purpose—for example, sending BLE‑MIDI packets, debouncing the BOOTSEL switch, or printing a visualisation over UART. Replacing a driver (say, swapping BLE‑MIDI for USB‑MIDI or switching from a UART text view to an OLED display) requires no changes to the core and no rebuild of the remaining drivers.
+Residing in `drivers/`, the drivers provide the project’s only connection to hardware. Each driver exposes a narrow C interface and fulfils a single purpose—for example, sending USB‑MIDI packets, debouncing the BOOTSEL switch, or printing a visualisation over UART. Replacing a driver (say, swapping USB‑MIDI for BLE‑MIDI or switching from a UART text view to an OLED display) requires no changes to the core and no rebuild of the remaining drivers.
 
 ### How the firmware runs
 
 At run time the three state machines advance in response to two independent streams of events:
 
-1. **Tempo ticks** – A BTstack user timer fires at an interval derived from the current BPM. Each tick calls `looper_handle_tick`, moving the sequencer forward by exactly one step with sample‑accurate timing.
+1. **Tempo ticks** – A timer fires at an interval derived from the current BPM. Each tick calls `looper_handle_tick`, moving the sequencer forward by exactly one step with sample‑accurate timing.
 2. **Button events** – The button driver debounces the hardware switch and raises high‑level events such as `CLICK_RELEASE` or `HOLD_RELEASE`. These events are processed by `looper_handle_input`, enabling the user to start or stop recording, switch tracks, clear patterns, or enter tap‑tempo mode.
 
 This split keeps time‑critical audio pacing deterministic while preserving a responsive user interface.

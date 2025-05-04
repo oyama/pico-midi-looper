@@ -12,9 +12,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "pico/cyw43_arch.h"
-
-#include "drivers/ble_midi.h"
+#include "drivers/usb_midi.h"
 #include "drivers/button.h"
 #include "drivers/display.h"
 #include "looper.h"
@@ -58,17 +56,17 @@ static void looper_set_status_led(bool on) { status_led_on = on; }
  * Otherwise mirrors the `status_led_on` flag during playback/recording.
  */
 static void looper_update_status_led(void) {
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, status_led_on);
+    gpio_put(PICO_DEFAULT_LED_PIN, status_led_on);
 }
 
 // Check if the note output destination is ready.
 static bool looper_perform_ready(void) {
-    return ble_midi_is_connected();
+    return usb_midi_is_connected();
 }
 
 // Send a note event to the output destination.
 static void looper_perform_note(uint8_t channel, uint8_t note, uint8_t velocity) {
-    ble_midi_send_note(channel, note, velocity);
+    usb_midi_send_note(channel, note, velocity);
 }
 
 // Sends a MIDI click at specific steps to indicate rhythm.
@@ -260,8 +258,8 @@ void looper_handle_button_event(button_event_t event) {
     }
 }
 
-// Runs `looper_process_state()` and reschedules the BTstack timer.
-void looper_handle_tick(btstack_timer_source_t *ts) {
+// Runs `looper_process_state()` and reschedules tick timer.
+int64_t looper_handle_tick(alarm_id_t id, __unused void *args) {
     uint64_t start_us = time_us_64();
 
     looper_process_state(start_us);
@@ -271,8 +269,8 @@ void looper_handle_tick(btstack_timer_source_t *ts) {
     uint32_t delay = (handler_delay_ms >= looper_status.step_duration_ms)
                          ? 1
                          : looper_status.step_duration_ms - handler_delay_ms;
-    btstack_run_loop_set_timer(ts, delay);
-    btstack_run_loop_add_timer(ts);
+    add_alarm_in_ms(delay, looper_handle_tick, NULL, false);
+    return 0;
 }
 
 // Poll button events, process them, and update the status LED.

@@ -4,31 +4,31 @@ This document describes the internal architecture of the Pico MIDI Looper firmwa
 
 ## Overview
 
-The Pico MIDI Looper is a BLE‑MIDI‑based loop recorder for Raspberry Pi Pico W.
+The Pico MIDI Looper is a USB‑MIDI‑based loop recorder for Raspberry Pi Pico.
 It captures and replays a two‑bar (32‑step) pattern of four drum tracks with a single button.
 Besides recording, a tap‑tempo mode lets you adjust the global BPM on‑the‑fly with that same button.
 
 Internally, the firmware is powered by two core mechanisms:
 
 1. **Main looper FSM** – governs the global state (*waiting*, *playing*, *recording*, *track‑switch*, *tap‑tempo prompt*, *clear*).
-2. **Timer‑driven sequencer** – a BTstack user‑timer fires once per step, advancing the pattern and sending the corresponding MIDI notes with sample‑accurate timing.
+2. **Timer‑driven sequencer** – a Pico SDK repeating‑timer fires once per step, advancing the pattern and sending the corresponding MIDI notes with sample‑accurate timing.
 
 A lightweight **tap‑tempo FSM** accompanies them, translating a series of taps into a new BPM value and handing it off to the looper without disturbing the timing loop.
 
 ## Looper State Machine
 
-The firmware centers a main FSM with six states: `Waiting / Playing / Recording / TrackSwitch / TapTempo / ClearTracks`. The updated diagram reflects this.
+The firmware centers on a main FSM with six states: `Waiting / Playing / Recording / TrackSwitch / TapTempo / ClearTracks`. The updated diagram reflects this.
 
 ![Looper FSM](looper_fsm.svg)
 
-- **Waiting**: Initial idle state before BLE connection is established.
+- **Waiting**: Initial idle state before USB connection is established.
 - **Playing**: Default playback state, running the sequencer.
 - **Recording**: Temporarily active while recording note input for 2 bars.
 - **TrackSwitch**: Transition state when switching between drum tracks.
 - **TapTempo**: Temporary mode for tap-tempo BPM entry.
 - **ClearTracks**: Transition state when clearing all track patterns.
 
-State transitions are triggered by BLE connection events and button presses. The state machine is evaluated on every step clock tick within the main loop logic.
+State transitions are triggered by USB connection events and button presses. The state machine is evaluated on every step clock tick within the main loop logic.
 
 ## Sequencer Timing
 
@@ -69,25 +69,25 @@ Each track is represented by a `track_t` structure containing:
 - A note number (MIDI note)
 - A MIDI channel
 - A `pattern[]` bit array (one bool per step)
-- An `hold_pattern[]` to revert recording on press
+- A `hold_pattern[]` to revert recording on press
 
 Four tracks are predefined: `Bass`, `Snare`, `Closed hi-hat` and `Open hi-hat` both on MIDI channel 10.
 
-## BLE MIDI Integration
+## USB MIDI Integration
 
-BLE MIDI communication is handled via BTstack. The system registers a MIDI service, advertises as `Pico`, and sends MIDI note-on messages via `att_server_notify` when a note is triggered.
+USB MIDI communication is handled via TinyUSB. The system registers a USB device descriptor, and sends MIDI note-on messages via `tud_midi_stream_write` when a note is triggered.
 
-The BLE connection status is monitored and used to gate playback and visual LED feedback.
+The USB connection status is monitored and used to gate playback and visual LED feedback.
 
 ## Code Structure Summary
 
 | File             | Responsibility                                              |
 | ---------------- | ----------------------------------------------------------- |
-| `src/main.c`     | Initialisation & run‑loop glue |
+| `src/main.c`     | Initialization & run‑loop glue |
 | `src/looper.c`   | Looper state machine, step sequencer, button event handling |
 | `src/tap_tempo.c`| Tap-tempo detection & BPM estimation sub-FSM                |
 | `drivers/button.c`   | Button press detection, debouncing, and press-type FSM      |
-| `drivers/ble_midi.c` | BLE advertising and MIDI note delivery                      |
+| `drivers/usb_midi.c` | Define USB descriptor and MIDI note delivery                |
 | `drivers/display.c`  | Display looper and track status on UART or USB CDC          |
 
 ## Design Goals

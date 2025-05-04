@@ -1,5 +1,5 @@
 /* main.c
- * BLE MIDI looper for Raspberry Pi Pico W.
+ * Pico MIDI looper for Raspberry Pi Pico.
  * A minimal 2-bars loop recorder using a single button to record and switch tracks.
  *
  * Copyright 2025, Hiroyuki OYAMA
@@ -7,11 +7,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include <stdio.h>
-#include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 
 #include "looper.h"
-#include "drivers/ble_midi.h"
+#include "drivers/usb_midi.h"
 
 /*
  * Entry point for the Pico MIDI Looper application.
@@ -22,13 +21,16 @@
  */
 int main(void) {
     stdio_init_all();
-    cyw43_arch_init();
+    usb_midi_init();
+
     looper_update_bpm(LOOPER_DEFAULT_BPM);
-    ble_midi_init(looper_handle_tick, looper_get_step_interval_ms());
+    add_alarm_in_ms(looper_get_step_interval_ms(), looper_handle_tick, NULL, false);
 
     printf("[MAIN] Pico MIDI Looper start\n");
     while (true) {
         looper_handle_input();
+        usb_midi_task();
+
         sleep_us(500);
     }
     return 0;
