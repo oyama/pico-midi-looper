@@ -31,6 +31,9 @@
 #define ANSI_CURSOR_FMT "\x1b[%u;%uH"
 #define ANSI_CLEAR_EOL "\x1b[K"
 
+#define ANSI_ENABLE_ALTSCREEN  "\x1b[?1049h"
+#define ANSI_DISABLE_ALTSCREEN "\x1b[?1049l"
+
 // Prints a single track row with step highlighting and note indicators.
 static void print_track(const char *label, const bool *steps, uint8_t current_step,
                         bool is_selected) {
@@ -44,9 +47,9 @@ static void print_track(const char *label, const bool *steps, uint8_t current_st
         if (current_step == i)
             printf(ANSI_BG_WHITE ANSI_BLACK "%s" ANSI_RESET ANSI_BOLD, (note_on ? "*" : "_"));
         else if (note_on)
-            putchar('*');
+            printf("*");
         else
-            putchar('_');
+            printf("_");
     }
     printf("]\n" ANSI_RESET);
 }
@@ -54,6 +57,8 @@ static void print_track(const char *label, const bool *steps, uint8_t current_st
 // Displays the looper's playback state, connection status, and track patterns.
 void display_update_looper_status(bool output_connected, const looper_status_t *looper,
                                   const track_t *tracks, size_t num_tracks) {
+    printf(ANSI_ENABLE_ALTSCREEN);
+
     if (looper->current_step % 32 == 0)
         printf(ANSI_CLEAR_HOME);
     printf(ANSI_HIDE_CURSOR);
