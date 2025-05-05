@@ -10,6 +10,7 @@
 #include "pico/stdlib.h"
 
 #include "looper.h"
+#include "drivers/led.h"
 #include "drivers/usb_midi.h"
 
 /*
@@ -21,8 +22,8 @@
  */
 int main(void) {
     stdio_init_all();
+    led_init();
     usb_midi_init();
-    looper_status_led_init();
 
     looper_update_bpm(LOOPER_DEFAULT_BPM);
     add_alarm_in_ms(looper_get_step_interval_ms(), looper_handle_tick, NULL, false);

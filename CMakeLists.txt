@@ -16,9 +16,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
   pico_stdlib
   drivers
 )
-if (PICO_CYW43_SUPPORTED)
-  target_link_libraries(${CMAKE_PROJECT_NAME} pico_cyw43_arch_none)
-endif()
 
 pico_enable_stdio_usb(${CMAKE_PROJECT_NAME} 1)
 pico_add_extra_outputs(${CMAKE_PROJECT_NAME})
@@ -27,6 +24,7 @@ add_library(drivers
   drivers/usb_midi.c
   drivers/button.c
   drivers/display.c
+  drivers/led.c
 )
 target_include_directories(drivers PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(drivers
@@ -34,3 +32,6 @@ target_link_libraries(drivers
   tinyusb_device
   tinyusb_board
 )
+if (PICO_CYW43_SUPPORTED)
+  target_link_libraries(drivers pico_cyw43_arch_none)
+endif()

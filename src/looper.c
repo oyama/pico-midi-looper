@@ -15,12 +15,9 @@
 #include "drivers/usb_midi.h"
 #include "drivers/button.h"
 #include "drivers/display.h"
+#include "drivers/led.h"
 #include "looper.h"
 #include "tap_tempo.h"
-
-#ifdef CYW43_WL_GPIO_LED_PIN
-#include "pico/cyw43_arch.h"
-#endif
 
 enum {
     MIDI_CHANNEL_1 = 0,
@@ -47,35 +44,6 @@ static track_t tracks[] = {
 };
 static const size_t NUM_TRACKS = sizeof(tracks) / sizeof(track_t);
 
-static bool status_led_on = false;
-
-void looper_status_led_init(void) {
-#if defined(PICO_DEFAULT_LED_PIN)
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-#elif defined(CYW43_WL_GPIO_LED_PIN)
-    cyw43_arch_init();
-#endif
-}
-
-/*
- * Controls the built-in LED on the Pico W.
- * Used for indicating the active track or recording.
- */
-static void looper_set_status_led(bool on) { status_led_on = on; }
-
-/*
- * Manages LED blinking when in WAITING state (BLE disconnected).
- * Otherwise mirrors the `status_led_on` flag during playback/recording.
- */
-static void looper_update_status_led(void) {
-#if defined(PICO_DEFAULT_LED_PIN)
-    gpio_put(PICO_DEFAULT_LED_PIN, status_led_on);
-#elif defined(CYW43_WL_GPIO_LED_PIN)
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, status_led_on);
-#endif
-}
-
 // Check if the note output destination is ready.
 static bool looper_perform_ready(void) {
     return usb_midi_is_connected();
@@ -100,9 +68,9 @@ static void looper_perform_step(void) {
         if (note_on) {
             looper_perform_note(tracks[i].channel, tracks[i].note, 0x7f);
             if (i == looper_status.current_track)
-                looper_set_status_led(1);
+                led_set(1);
         } else if (i == looper_status.current_track) {
-            looper_set_status_led(0);
+            led_set(0);
         }
     }
 }
@@ -110,7 +78,7 @@ static void looper_perform_step(void) {
 // Perform note events for the current step while recording.
 // In recording mode, the status LED is always turned on.
 static void looper_perform_step_recording(void) {
-    looper_set_status_led(1);
+    led_set(1);
 
     for (uint8_t i = 0; i < NUM_TRACKS; i++) {
         bool note_on = tracks[i].pattern[looper_status.current_step];
@@ -193,7 +161,7 @@ void looper_process_state(uint64_t start_us) {
                 looper_status.state = LOOPER_STATE_PLAYING;
                 looper_status.current_step = 0;
             }
-            looper_set_status_led((looper_status.current_step % (LOOPER_CLICK_DIV * 4)) == 0);
+            led_set((looper_status.current_step % (LOOPER_CLICK_DIV * 4)) == 0);
             looper_next_step(start_us);
             break;
         case LOOPER_STATE_PLAYING:
@@ -208,7 +176,7 @@ void looper_process_state(uint64_t start_us) {
 
             looper_status.recording_step_count++;
             if (looper_status.recording_step_count >= LOOPER_TOTAL_STEPS) {
-                looper_set_status_led(0);
+                led_set(0);
                 looper_status.state = LOOPER_STATE_PLAYING;
             }
             break;
@@ -220,7 +188,7 @@ void looper_process_state(uint64_t start_us) {
             break;
         case LOOPER_STATE_TAP_TEMPO:
             send_click_if_needed();
-            looper_set_status_led((looper_status.current_step % LOOPER_CLICK_DIV) == 0);
+            led_set((looper_status.current_step % LOOPER_CLICK_DIV) == 0);
             looper_next_step(start_us);
             break;
         case LOOPER_STATE_CLEAR_TRACKS:
@@ -300,5 +268,5 @@ void looper_handle_input(void) {
     } else {
         looper_handle_button_event(event);
     }
-    looper_update_status_led();
+    led_update();
 }
