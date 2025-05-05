@@ -93,7 +93,7 @@ These MIDI notes are defined in the code and transmitted over USB-MIDI to compat
 
 ### Display
 
-When connected to a serial terminal (at 115200 bps), the Pico MIDI Looper provides a visual representation of the current patterns across all tracks:
+When connected to a USB serial terminal, the Pico MIDI Looper provides a visual representation of the current patterns across all tracks:
 
 ![Pattern display over serial](https://github.com/user-attachments/assets/2bc9e6dc-1d39-46f6-961d-7481962bb068)
 
