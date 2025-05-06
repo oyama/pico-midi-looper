@@ -1,5 +1,6 @@
 #pragma once
 
+#include "pico/async_context.h"
 #include "pico/stdlib.h"
 #include "drivers/button.h"
 
@@ -62,6 +63,8 @@ void looper_process_state(uint64_t start_us);
 
 void looper_handle_button_event(button_event_t event);
 
-int64_t looper_handle_tick(alarm_id_t id, void *args);
+void looper_handle_tick(async_context_t *ctx, async_at_time_worker_t *worker);
 
 void looper_handle_input(void);
+
+void looper_schedule_step_timer(void);

@@ -12,10 +12,12 @@
 #include <math.h>
 #include <string.h>
 
+#include "drivers/ble_midi.h"
 #include "drivers/usb_midi.h"
 #include "drivers/button.h"
 #include "drivers/display.h"
 #include "drivers/led.h"
+#include "drivers/async_timer.h"
 #include "looper.h"
 #include "tap_tempo.h"
 
@@ -46,12 +48,13 @@ static const size_t NUM_TRACKS = sizeof(tracks) / sizeof(track_t);
 
 // Check if the note output destination is ready.
 static bool looper_perform_ready(void) {
-    return usb_midi_is_connected();
+    return usb_midi_is_connected() || ble_midi_is_connected();
 }
 
 // Send a note event to the output destination.
 static void looper_perform_note(uint8_t channel, uint8_t note, uint8_t velocity) {
     usb_midi_send_note(channel, note, velocity);
+    ble_midi_send_note(channel, note, velocity);
 }
 
 // Sends a MIDI click at specific steps to indicate rhythm.
@@ -244,7 +247,7 @@ void looper_handle_button_event(button_event_t event) {
 }
 
 // Runs `looper_process_state()` and reschedules tick timer.
-int64_t looper_handle_tick(alarm_id_t id, __unused void *args) {
+void looper_handle_tick(async_context_t *ctx, async_at_time_worker_t *worker) {
     uint64_t start_us = time_us_64();
 
     looper_process_state(start_us);
@@ -254,8 +257,8 @@ int64_t looper_handle_tick(alarm_id_t id, __unused void *args) {
     uint32_t delay = (handler_delay_ms >= looper_status.step_duration_ms)
                          ? 1
                          : looper_status.step_duration_ms - handler_delay_ms;
-    add_alarm_in_ms(delay, looper_handle_tick, NULL, false);
-    return 0;
+
+    async_context_add_at_time_worker_in_ms(ctx, worker, delay);
 }
 
 // Poll button events, process them, and update the status LED.
@@ -269,4 +272,13 @@ void looper_handle_input(void) {
         looper_handle_button_event(event);
     }
     led_update();
+}
+
+void looper_schedule_step_timer(void) {
+    looper_update_bpm(LOOPER_DEFAULT_BPM);
+
+    static async_at_time_worker_t worker;
+    worker.do_work = looper_handle_tick;
+    async_context_t *ctx = async_timer_async_context();
+    async_context_add_at_time_worker_in_ms(ctx, &worker, looper_get_step_interval_ms());
 }

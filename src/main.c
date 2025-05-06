@@ -11,7 +11,9 @@
 
 #include "looper.h"
 #include "drivers/led.h"
+#include "drivers/ble_midi.h"
 #include "drivers/usb_midi.h"
+#include "drivers/async_timer.h"
 
 /*
  * Entry point for the Pico MIDI Looper application.
@@ -23,10 +25,13 @@
 int main(void) {
     stdio_init_all();
     led_init();
-    usb_midi_init();
 
-    looper_update_bpm(LOOPER_DEFAULT_BPM);
-    add_alarm_in_ms(looper_get_step_interval_ms(), looper_handle_tick, NULL, false);
+    usb_midi_init();
+    ble_midi_init();
+
+    // Async timer + sequencer tick setup
+    async_timer_init();
+    looper_schedule_step_timer();
 
     printf("[MAIN] Pico MIDI Looper start\n");
     while (true) {
