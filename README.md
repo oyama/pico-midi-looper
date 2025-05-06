@@ -3,11 +3,9 @@
 [![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
 ![Price](https://img.shields.io/badge/Hardware-$4-green)
 
-The BLE-MIDI version is archived here: https://github.com/oyama/pico-midi-looper-ble
-
 ## Overview
 
-The Pico MIDI Looper is a minimalist 2-bar drum looping device that leverages the Raspberry Pi Pico's capabilities to provide MIDI functionality via USB (USB-MIDI). Its primary purpose is to offer a compact, easy-to-build musical instrument that enables rhythm creation with minimal hardware requirements.
+ The Pico MIDI Looper is a minimalist 2-bar drum looping device that leverages the Raspberry Pi Pico's capabilities to provide MIDI functionality via USB (USB-MIDI) and, on Pico W hardware, via BLE (BLE-MIDI). Its primary purpose is to offer a compact, easy-to-build musical instrument that enables rhythm creation with minimal hardware requirements.
 
 The system is designed for:
 - Educational contexts and workshops
@@ -24,6 +22,7 @@ The looper requires only the standard Raspberry Pi Pico hardware with no additio
 | Feature                | Description                                |
 |------------------------|--------------------------------------------|
 | USB-MIDI Compatibility | Connects directly to DAWs and synth apps via USB |
+| BLE-MIDI Compatibility | Connects wirelessly to DAWs and synth apps via Bluetooth LE |
 | 2-Bar Pattern Length   | 32 steps (4 beats × 4 subdivisions × 2 bars)|
 | 4-Track Structure      | Separate tracks for different drum sounds  |
 | Tap-Tempo              | Set BPM by tapping the button              |
@@ -37,6 +36,8 @@ The system is intentionally minimalist yet expressive, providing musicians with 
 ## Getting Started
 
 ### Flash the Firmware
+
+> **Note:** The prebuilt `.uf2` available on the Releases page is compiled for the non-wireless Pico board and does **not** include BLE-MIDI support. To enable BLE-MIDI on a Pico W, please build from source with CYW43 enabled.
 
 You can either download a prebuilt `.uf2` from the [Releases](https://github.com/oyama/pico-midi-looper/releases/latest) page, or build it yourself.
 
@@ -89,7 +90,7 @@ Additionally, the system uses two special sounds for feedback:
 - Hand Clap (MIDI Note 39) for track switching cues
 - Rim Shot (MIDI Note 37) for metronome clicks
 
-These MIDI notes are defined in the code and transmitted over USB-MIDI to compatible receivers.
+These MIDI notes are defined in the code and transmitted to compatible receivers via USB-MIDI and/or BLE-MIDI.
 
 ### Display
 
@@ -132,7 +133,7 @@ Located under `src/`, the core consists of fewer than three hundred lines of har
 
 ### Drivers layer
 
-Residing in `drivers/`, the drivers provide the project’s only connection to hardware. Each driver exposes a narrow C interface and fulfils a single purpose—for example, sending USB‑MIDI packets, debouncing the BOOTSEL switch, or printing a visualisation over UART. Replacing a driver (say, swapping USB‑MIDI for BLE‑MIDI or switching from a UART text view to an OLED display) requires no changes to the core and no rebuild of the remaining drivers.
++Residing in `drivers/`, the drivers provide the project’s only connection to hardware. Each driver exposes a narrow C interface and fulfils a single purpose— for example, sending MIDI packets over USB (USB-MIDI) or Bluetooth LE (BLE-MIDI), debouncing the BOOTSEL switch, or printing a visualisation over UART. Replacing a driver (e.g. switching from a UART text view to an OLED display) requires no changes to the core and no rebuild of the remaining drivers.
 
 ### How the firmware runs
 
