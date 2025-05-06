@@ -45,7 +45,7 @@ static void print_track(const char *label, const bool *steps, uint8_t current_st
     for (int i = 0; i < LOOPER_TOTAL_STEPS; ++i) {
         bool note_on = steps[i];
         if (current_step == i)
-            printf(ANSI_BG_WHITE ANSI_BLACK "%s" ANSI_RESET ANSI_BOLD, (note_on ? "*" : "_"));
+            printf(ANSI_BG_WHITE ANSI_BLACK "%s" ANSI_RESET ANSI_BOLD, (note_on ? "*" : " "));
         else if (note_on)
             printf("*");
         else
