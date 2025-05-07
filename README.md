@@ -96,7 +96,7 @@ These MIDI notes are defined in the code and transmitted to compatible receivers
 
 When connected to a USB serial terminal, the Pico MIDI Looper provides a visual representation of the current patterns across all tracks:
 
-![Pattern display over serial](https://github.com/user-attachments/assets/2bc9e6dc-1d39-46f6-961d-7481962bb068)
+![Pattern display over serial](https://github.com/user-attachments/assets/39de4925-730e-4c8f-80a7-e6c8adf90e99)
 
 The display shows:
 
