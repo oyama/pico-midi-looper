@@ -94,8 +94,11 @@ void display_update_looper_status(bool output_connected, const looper_status_t *
            looper->bpm);
 
     printf(ANSI_BOLD "                1   2   3   4   5   6   7   8\n" ANSI_RESET);
-    for (uint8_t i = 0; i < num_tracks; i++)
+
+    // Display tracks in order from cymbals to basses, like a typical drum machine.
+    for (int8_t i = num_tracks - 1; i >= 0; i--)
         print_track(tracks[i].name, tracks[i].pattern, looper->current_step,
                     i == looper->current_track);
+
     fflush(stdout);
 }
